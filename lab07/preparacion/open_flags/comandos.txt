@@ -1,0 +1,12 @@
+Creación de archivo previo:
+echo "Contenido anterior" > salida.txt
+cat salida.txt
+
+Compilación y ejecución:
+nasm -f elf64 open_flags.asm -o open_flags.o
+ld open_flags.o -o open_flags
+./open_flags
+
+Verificación:
+echo $?
+strace -e trace=open,write,close,exit ./open_flags

@@ -1,0 +1,12 @@
+Creación de archivo:
+echo "Primera línea" > log.txt
+cat log.txt
+
+Compilación y ejecución:
+nasm -f elf64 open_append.asm -o open_append.o
+ld open_append.o -o open_append
+./open_append
+
+Verificación:
+cat log.txt
+strace -e trace=open,write,close,exit ./open_append
