@@ -1,0 +1,8 @@
+Compilación y ejecución:
+nasm -f elf64 crear_hola.asm -o crear_hola.o
+ld crear_hola.o -o crear_hola
+./crear_hola salida.txt
+
+Verificación:
+cat salida.txt
+strace -e trace=open,write,close,exit ./crear_hola salida.txt
