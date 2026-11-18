@@ -28,19 +28,18 @@ _start:
 
     ; 3. Copiar argv[1] al buffer 'nombre' y guardar su longitud en r13
     mov rsi, [rsp + 16]         ; fuente: argv[1]
-    mov rdi, nombre             ; destino: buffer 'nombre'
     xor r13, r13                ; r13 = longitud = 0
 
 copiar_base:
     mov al, [rsi + r13]         ; lee carácter actual de argv[1]
     cmp al, 0                   ; ¿fin de cadena ('\0')?
     je listo_base
-    mov [rdi + r13], al         ; copia al buffer
+    mov [nombre + r13], al      ; copia al buffer
     inc r13                     ; longitud++
     jmp copiar_base
 
 listo_base:
-    mov byte [rdi + r13 + 1], 0 ; coloca '\0' justo después del espacio del dígito
+    mov byte [nombre + r13 + 1], 0 ; coloca '\0' justo después del espacio del dígito
 
     ; 4. Crear los N archivos vacíos: desde rbx = 1 hasta r12 (N)
     mov rbx, 1                  ; contador de archivo actual (1..N)

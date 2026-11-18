@@ -4,6 +4,9 @@
 
 %define LOAD_ADDRESS 0x00020000 ; pretty much any number >0 works
 %define CODE_SIZE END-(LOAD_ADDRESS+0x78) ; everything beyond the HEADER is code
+%define O_WRONLY 1
+%define O_CREAT  100o
+%define O_TRUNC  1000o
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;HEADER;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -52,25 +55,49 @@ PROGRAM_HEADER:
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;INSTRUCTIONS;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-section .data:
-	base db "archivito_"
-	len_base equ $ - base
-
 START:	; address label representing the entry point of our program
+	; 1. Verificar que se recibieron exactamente 2 argumentos (argc == 3)
+	mov rax, [rsp]				; rax = argc (desde el tope del process stack)
+	cmp rax, 3					; argv[0] (exe), argv[1] (texto), argv[2] (N)
+	jne salir_error
 
-	mov rax, [rsp]
-	cmp rax, 3
+	; 2. Leer el dígito ASCII de N desde argv[2] (sin necesidad de convertir a entero)
+	mov rsi, [rsp + 24]			; rsi = puntero a argv[2]
+	mov bl, [rsi]				; bl = carácter ASCII de N ('1'..'9')
+
+crear_loop:
+	; 3. Crear/abrir "archivito_X": sys_open(nombre, flags, 644o)
+	mov eax, 2								; syscall sys_open
+	mov edi, nombre							; puntero al nombre del archivo
+	mov esi, O_WRONLY | O_CREAT | O_TRUNC	; escritura + crear + vaciar
+	mov edx, 644o							; permisos rw-r--r--
+	syscall
+
+	cmp eax, 0					; si eax < 0, error al crear/abrir
 	jl salir_error
 
-	mov rbx, [rsp + 24]
-	
+	; 4. Cerrar el archivo: sys_close(fd)
+	mov edi, eax				; fd devuelto por sys_open
+	mov eax, 3					; syscall sys_close
+	syscall
 
+	; 5. Incrementar sufijo ('1' -> '2' -> ...) y repetir hasta N
+	inc byte [nombre + 10]		; avanza el carácter 'X' en "archivito_X"
+	cmp [nombre + 10], bl		; ¿ya superamos N?
+	jle crear_loop				; si <= N, crear el siguiente archivo
 
+salir:
+	mov eax, 60					; syscall sys_exit
+	xor edi, edi				; código de salida 0
+	syscall
 
 salir_error:
-	mov rax, 60
-	mov rdi, 1
+	mov eax, 60					; syscall sys_exit
+	mov edi, 0xFF				; código de salida 255 (error)
 	syscall
+
+	; Datos en el mismo segmento (después de sys_exit, antes de END)
+	nombre db "archivito_1", 0	; nombre base con sufijo inicial '1' y '\0'
 
 END:	; address label representing the end of our program
 
