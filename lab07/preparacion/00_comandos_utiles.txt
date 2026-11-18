@@ -1,0 +1,21 @@
+=== CONFIGURACIÓN INICIAL EN EL LAB ===
+sudo apt update && sudo apt install manpages-dev strace
+echo "set disassembly-flavor intel" >> ~/.gdbinit
+echo "set disassemble-next-line on" >> ~/.gdbinit
+
+=== COMPILAR Y ENLAZAR (ELF64 estándar) ===
+nasm -f elf64 programa.asm -o programa.o
+ld programa.o -o programa
+./programa [args...]
+
+=== COMPILAR PLANTILLA MINIMAL ELF (nasm -f bin) ===
+nasm -f bin programa.asm -o programa
+chmod +x programa
+./programa [args...]
+
+=== VERIFICAR Y DEPURAR ===
+echo $?                                          # Ver código de salida (syscall exit)
+strace -e trace=open,openat,write,close,exit ./programa [args...]
+gdb --args ./programa [args...]
+  (gdb) x/8gx $rsp                               # Ver process stack (argc y punteros argv)
+  (gdb) x/s <direccion>                          # Ver cadena en memoria

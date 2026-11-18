@@ -1,0 +1,12 @@
+Estimados estudiantes:
+
+Las actividades de repaso para el LAB 7 son:
+Leer un arreglo de datos (por ejemplo: definido con "db") dentro de un bucle.
+Leer datos de una matriz, mediante filas y columnas.
+Entender qué hace la instrucción syscall.
+Hacer un programa ejecutable que tome un solo argumento y lo devuelva mediante un syscall exit, y se verifique con un "echo $?".
+El código debe empezar verificando que tienes sólo dos argumentos; de lo contrario termina la ejecución y devuelve 0xFF como código de error. Hacer el código en dos versiones: asm estándar y con la plantilla Schizone.
+Repetir el programa anterior, pero el argumento de entrada del ejecutable es un número de dos dígitos.
+Usar los syscall open, write y close para implementar un ejecutable que  genere un nuevo archivo y al mismo tiempo le escriba un contenido.
+Implementar un ejecutable que tome dos argumentos de entrada: una cadena de caracteres y un número de un solo dígito. El ejecutable debe crear una cantidad de archivos nuevos igual al número ingresado, y todos deben empezar con el nombre indicado, y un sufijo que los distinga. Ejemplo: ./exe archivito 4; esto debería crear "archivito1", "archivito2", "archivito3" y "archivito4". Los archivos pueden estar vacíos.
+En el LAB 7 se incluirán preguntas similares a estas actividades de repaso.

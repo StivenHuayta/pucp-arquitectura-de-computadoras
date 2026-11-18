@@ -1,7 +1,0 @@
-Antes de comenzar el lab:
-sudo apt update && sudo apt install manpages-dev
-echo "set disassembly-flavor intel" >> ~/.gdbinit
-echo "set disassemble-next-line on" >> ~/.gdbinit
-sudo apt install strace
-
-Comandos útiles:

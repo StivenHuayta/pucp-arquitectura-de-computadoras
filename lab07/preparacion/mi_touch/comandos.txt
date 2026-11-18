@@ -1,8 +1,0 @@
-Compilar y ejecutar:
-nasm -f elf64 mi_touch.asm -o mi_touch.o
-ld mi_touch.o -o mi_touch
-./mi_touch nuevo.txt
-
-Verificar:
-ls -l nuevo.txt
-strace -e trace=open,close,exit ./mi_touch nuevo.txt

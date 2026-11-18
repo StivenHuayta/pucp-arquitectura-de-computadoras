@@ -1,7 +1,0 @@
-Compilar y ejecutar:
-nasm -f elf64 leer_arg.asm
-ld leer_arg.o -o leer_arg
-./leer_arg "hola mundo"
-
-Debuggear:
-gdb --args ./leer_arg "hola mundo"
