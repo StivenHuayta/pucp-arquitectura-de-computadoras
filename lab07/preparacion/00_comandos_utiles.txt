@@ -19,3 +19,9 @@ strace -e trace=open,openat,write,close,exit ./programa [args...]
 gdb --args ./programa [args...]
   (gdb) x/8gx $rsp                               # Ver process stack (argc y punteros argv)
   (gdb) x/s <direccion>                          # Ver cadena en memoria
+
+=== LONGITUD DE CADENAS EN NASM ===
+; Texto fijo en .data (sin '\0' al final para sys_write):
+  mensaje db "Hola mundo", 10
+  len     equ $ - mensaje                        # Calcula longitud al ensamblar (sin bucle)
+; Texto desde argumento (argv) o sys_read -> usar bucle contando hasta '\0' (0)

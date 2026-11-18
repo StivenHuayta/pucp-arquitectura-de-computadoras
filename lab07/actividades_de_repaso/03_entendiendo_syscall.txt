@@ -1,0 +1,90 @@
+=============================================================================
+ENTENDIENDO LA INSTRUCCION `syscall` (Linux x86-64)
+Resumen para las actividades de repaso - Lab 07
+=============================================================================
+
+1. QUE ES Y QUE HACE `syscall`
+------------------------------
+Un programa normal se ejecuta en "modo usuario" (Ring 3), donde no tiene
+permiso directo para acceder al hardware, crear/leer archivos ni terminar
+su propio proceso.
+
+La instruccion `syscall` le pide al sistema operativo (kernel de Linux, en
+"modo kernel" / Ring 0) que ejecute un servicio por nosotros y luego nos
+devuelva el control en la siguiente instruccion.
+
+
+2. CONVENCION DE REGISTROS (Linux x86-64)
+-----------------------------------------
+Antes de ejecutar `syscall`, debemos cargar los registros segun esta regla:
+
+  - rax : Numero de syscall (que servicio queremos)
+  - rdi : 1er argumento
+  - rsi : 2do argumento
+  - rdx : 3er argumento
+  - r10 : 4to argumento  (nota: no es rcx, porque syscall lo sobrescribe)
+  - r8  : 5to argumento
+  - r9  : 6to argumento
+
+Al regresar de `syscall`:
+  - rax : Valor de retorno (si es negativo, indica un error).
+  - Registros modificados por la CPU: `rcx` y `r11` se sobrescriben
+    internamente durante `syscall`.
+  - Registros preservados: `rbx`, `rbp`, `r12`-`r15` mantienen su valor
+    (por eso en los ejemplos se guarda el file descriptor `fd` o contadores
+    en `rbx`, `r12`, `r13` y no en `rcx`).
+
+
+3. SYSCALLS USADOS EN LOS EJEMPLOS DE REPASO (LAB 07)
+-----------------------------------------------------
+
+a) sys_exit (rax = 60) -> Terminar el programa
+   - rdi: codigo de salida (0..255), visible en la terminal con `echo $?`.
+   - Uso en los ejemplos:
+     * 01_arreglo_puntero.asm y 02_matriz_recorrido.asm:
+       `rdi = 0` para salir sin errores al terminar el recorrido.
+     * 04_arg_exit, 045_arg_exit_atoi, 05_arg_exit_2digitos:
+       devuelve en `rdi` el numero leido por argumento, o `0xFF` (255)
+       si la cantidad de argumentos es incorrecta.
+     * 06 y 07: devuelve `0` si todo salio bien, o `1` si hubo error.
+
+b) sys_open (rax = 2) -> Abrir o crear un archivo
+   - rdi: puntero al nombre del archivo (cadena terminada en '\0').
+   - rsi: flags de apertura (solo escritura | crear si no existe | vaciar si existe):
+          mov rsi, 1 | 100o | 1000o     ; o directo: mov rsi, 1101o
+          ; Si prefieres usar nombres, pega estos %define arriba del archivo:
+          ; %define O_WRONLY 1
+          ; %define O_CREAT  100o
+          ; %define O_TRUNC  1000o
+          ; %define O_APPEND 2000o
+          ; mov rsi, O_WRONLY | O_CREAT | O_TRUNC
+   - rdx: permisos del archivo en octal si se crea (ej. mov rdx, 644o ; rw-r--r--).
+   - Retorno en rax: file descriptor (`fd >= 0`) si tuvo exito, o `< 0` si fallo.
+   - Uso en los ejemplos:
+     * 06_crear_escribir_archivo.asm: abre/crea `argv[1]` y guarda el `fd` en `rbx`.
+     * 07_crear_multiples_archivos.asm: crea `<nombre>1`, `<nombre>2`, ... en bucle.
+
+c) sys_write (rax = 1) -> Escribir bytes en un archivo (o salida estandar)
+   - rdi: file descriptor (`fd`) devuelto por `sys_open` (o `1` para stdout).
+   - rsi: direccion del buffer/texto a escribir.
+   - rdx: cantidad exacta de bytes a escribir.
+   - Retorno en rax: cantidad de bytes escritos (o `< 0` si fallo).
+   - Uso en los ejemplos:
+     * 06_crear_escribir_archivo.asm: escribe el contenido de `argv[2]` en el
+       archivo recien abierto usando su `fd` guardado en `rbx`.
+
+d) sys_close (rax = 3) -> Cerrar un archivo abierto
+   - rdi: file descriptor (`fd`) que se quiere cerrar.
+   - Uso en los ejemplos:
+     * 06_crear_escribir_archivo.asm: cierra el archivo tras escribir.
+     * 07_crear_multiples_archivos.asm: cierra cada archivo creado dentro del
+       bucle antes de pasar al siguiente.
+
+
+4. PATRON TIPICO EN ESTOS PROGRAMAS
+-----------------------------------
+  1. Cargar argumentos en `rdi`, `rsi`, `rdx`...
+  2. Cargar el numero de servicio en `rax` (ej. 2, 1, 3, 60).
+  3. Ejecutar `syscall`.
+  4. Revisar `rax` si hace falta detectar error (`cmp rax, 0` / `jl error`)
+     o guardar el resultado (ej. `mov rbx, rax` para no perder el `fd`).
